@@ -27,12 +27,12 @@
       # Edition metadata (updated by GitHub Action per edition)
       editions = {
         cliproxyapi = {
-          version = "6.8.38";
+          version = "6.8.39";
           hashes = {
-            "x86_64-linux" = "sha256-RtWwArbrJXjRmUVlioWhF95OyEtMrDU35wyLeSgVNxs=";
-            "aarch64-linux" = "sha256-IDRpkfjkFC2HV0BSbUk3Xz9qIXeoALuOeyu1dIaiDmw=";
-            "x86_64-darwin" = "sha256-1Fj7EYZSN683DQ5tG6JK15YE0hhuE4xNzIZJO2Q9Neg=";
-            "aarch64-darwin" = "sha256-McvSlEhG/tHa2gIvEFmifmCTEpXIdbp9NxbWKJod7x4=";
+            "x86_64-linux" = "sha256-ke8ljQJVmhAISgEhiTGiJEgZzuAuU/HtEB7kEBux8kA=";
+            "aarch64-linux" = "sha256-9Gq+LvFg5jtpOooMFrf+BY99/IMv9roTd8RIxCvj9hQ=";
+            "x86_64-darwin" = "sha256-eoUrycZsRDqejZsnIQmOM+uGsF0d2jcUKCzHq5ubvzM=";
+            "aarch64-darwin" = "sha256-M/GfRN98PViKQd9+KanOCjP7H1oUOfcf85ORlc0myKA=";
           };
           repo = "router-for-me/CLIProxyAPI";
           archivePrefix = "CLIProxyAPI";
