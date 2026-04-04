@@ -249,9 +249,9 @@ You can also use the packages via the overlay:
 
 ## Automatic Updates
 
-This repository includes a GitHub Action that checks for new CLIProxyAPI releases daily and creates PRs with updated version and hashes.
+This repository includes a GitHub Action that checks for new CLIProxyAPI releases daily and commits updated versions and hashes directly to `main`.
 
-The workflow checks each edition independently using a matrix strategy, creating separate PRs for each edition when updates are available.
+The workflow checks each edition independently and applies all needed updates in one commit, so stale maintainer review doesn't block releases.
 
 To manually trigger an update:
 1. Go to Actions -> "Update CLIProxyAPI Version"

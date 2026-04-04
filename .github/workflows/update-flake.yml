@@ -9,122 +9,31 @@ on:
       edition:
         description: 'Edition to update (empty = all)'
         required: false
-        type: choice
-        options:
-          - ''
-          - 'cliproxyapi'
-          - 'cliproxyapi-plus'
-          - 'cliproxyapi-business'
+        type: string
       version:
         description: 'Specific version (only used with specific edition)'
         required: false
         type: string
 
+concurrency:
+  group: update-cli-proxyapi-main
+  cancel-in-progress: false
+
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  check-updates:
+  update-main:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.check.outputs.matrix }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Check for updates
-        id: check
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_EDITION: ${{ inputs.edition }}
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          # Edition-to-repo mapping (must match update-version.sh)
-          declare -A REPOS=(
-              ["cliproxyapi"]="router-for-me/CLIProxyAPI"
-              ["cliproxyapi-plus"]="router-for-me/CLIProxyAPIPlus"
-              ["cliproxyapi-business"]="router-for-me/CLIProxyAPIBusiness"
-          )
-
-          # Collect updates into array
-          updates=()
-
-          # Determine which editions to check
-          if [ -n "$INPUT_EDITION" ]; then
-            editions_to_check=("$INPUT_EDITION")
-          else
-            editions_to_check=("cliproxyapi" "cliproxyapi-plus" "cliproxyapi-business")
-          fi
-
-          for edition in "${editions_to_check[@]}"; do
-            repo="${REPOS[$edition]}"
-
-            echo "Checking $edition ($repo)..."
-
-            # Extract current version from flake.nix using perl multiline match
-            # The /s modifier allows . to match newlines
-            current_version=$(perl -0ne 'print $1 if /'"$edition"' = \{[^}]*?version = "([^"]+)"/s' flake.nix)
-
-            if [ -z "$current_version" ]; then
-              echo "Warning: Could not extract version for $edition, skipping"
-              continue
-            fi
-
-            echo "  Current version: $current_version"
-
-            # Determine target version
-            if [ -n "$INPUT_EDITION" ] && [ -n "$INPUT_VERSION" ]; then
-              # Use specified version for specific edition
-              new_version="$INPUT_VERSION"
-            else
-              # Fetch latest from GitHub API with authentication
-              new_version=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-                "https://api.github.com/repos/$repo/releases/latest" | \
-                jq -r '.tag_name' | sed 's/^v//')
-            fi
-
-            if [ -z "$new_version" ]; then
-              echo "Warning: Could not fetch latest version for $edition, skipping"
-              continue
-            fi
-
-            echo "  Latest version: $new_version"
-
-            # Check if update is needed
-            if [ "$current_version" != "$new_version" ]; then
-              echo "  Update needed: $current_version -> $new_version"
-              updates+=("{\"edition\":\"$edition\",\"new_version\":\"$new_version\",\"current_version\":\"$current_version\",\"repo\":\"$repo\"}")
-            else
-              echo "  Already at latest version"
-            fi
-          done
-
-          # Build JSON matrix output
-          if [ ${#updates[@]} -eq 0 ]; then
-            matrix='{"include":[]}'
-          else
-            # Join updates with commas and wrap in include array
-            updates_json=$(IFS=,; echo "${updates[*]}")
-            matrix="{\"include\":[$updates_json]}"
-          fi
-
-          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-          echo ""
-          echo "Matrix output: $matrix"
-
-  update-edition:
-    needs: check-updates
-    if: fromJson(needs.check-updates.outputs.matrix).include[0] != null
-    runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{ fromJson(needs.check-updates.outputs.matrix) }}
-      fail-fast: false
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Prepare main branch
+        run: git checkout -B main origin/main
 
       - name: Install Nix
         uses: cachix/install-nix-action@v27
@@ -133,26 +42,130 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
+      - name: Check for updates
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_EDITION: ${{ inputs.edition }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          # Edition-to-repo mapping (must match update-version.sh)
+          declare -A REPOS=(
+              ["cliproxyapi"]="router-for-me/CLIProxyAPI"
+              ["cliproxyapi-plus"]="router-for-me/CLIProxyAPIPlus"
+              ["cliproxyapi-business"]="router-for-me/CLIProxyAPIBusiness"
+          )
+
+          updates=()
+
+          # Determine which editions to check
+          if [ -n "$INPUT_EDITION" ]; then
+            editions_to_check=("$INPUT_EDITION")
+          else
+            editions_to_check=(
+              "cliproxyapi"
+              "cliproxyapi-plus"
+              "cliproxyapi-business"
+            )
+          fi
+
+          for edition in "${editions_to_check[@]}"; do
+            repo="${REPOS[$edition]}"
+
+            echo "Checking $edition ($repo)..."
+
+            current_version=$(
+              awk -v edition="$edition" '
+                $0 ~ edition" = {" { inblock = 1; next }
+                inblock && /version = "/ {
+                  line = $0
+                  sub(/.*version = "/, "", line)
+                  sub(/".*/, "", line)
+                  print line
+                  exit
+                }
+              ' flake.nix
+            )
+
+            if [ -z "$current_version" ]; then
+              echo "Warning: Could not extract version for $edition, skipping"
+              continue
+            fi
+
+            echo "  Current version: $current_version"
+
+            if [ -n "$INPUT_EDITION" ] && [ -n "$INPUT_VERSION" ]; then
+              new_version="$INPUT_VERSION"
+            else
+              new_version=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+                "https://api.github.com/repos/$repo/releases/latest" | \
+                jq -r '.tag_name' | sed 's/^v//')
+            fi
+
+            if [ -z "$new_version" ] || [ "$new_version" = "null" ]; then
+              echo "Warning: could not fetch latest version for $edition"
+              echo "Skipping"
+              continue
+            fi
+
+            echo "  Latest version: $new_version"
+
+            if [ "$current_version" != "$new_version" ]; then
+              echo "  Update needed: $current_version -> $new_version"
+              updates+=("$(jq -nc \
+                --arg edition "$edition" \
+                --arg new_version "$new_version" \
+                --arg current_version "$current_version" \
+                --arg repo "$repo" \
+                '{edition:$edition,new_version:$new_version,current_version:$current_version,repo:$repo}'
+              )")
+            else
+              echo "  Already at latest version"
+            fi
+          done
+
+          if [ ${#updates[@]} -eq 0 ]; then
+            echo '[]' > updates.json
+          else
+            updates_json=$(IFS=,; echo "${updates[*]}")
+            printf '[%s]\n' "$updates_json" > updates.json
+          fi
+
+          echo "Update plan:"
+          cat updates.json
+
       - name: Update version and hashes
         run: |
+          set -euo pipefail
+
+          if [ ! -s updates.json ] || \
+             [ "$(jq length updates.json)" -eq 0 ]; then
+            echo "No updates needed."
+            exit 0
+          fi
+
           chmod +x scripts/update-version.sh
-          ./scripts/update-version.sh "${{ matrix.edition }}" "${{ matrix.new_version }}"
+          while IFS= read -r update; do
+            edition=$(jq -r '.edition' <<<"$update")
+            new_version=$(jq -r '.new_version' <<<"$update")
+            echo "Updating $edition to v$new_version..."
+            ./scripts/update-version.sh "$edition" "$new_version"
+          done < <(jq -c '.[]' updates.json)
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update ${{ matrix.edition }} to v${{ matrix.new_version }}"
-          title: "chore: update ${{ matrix.edition }} to v${{ matrix.new_version }}"
-          body: |
-            Automated update of ${{ matrix.edition }} from v${{ matrix.current_version }} to v${{ matrix.new_version }}.
+      - name: Commit and push to main
+        run: |
+          set -euo pipefail
 
-            **Release notes:** https://github.com/${{ matrix.repo }}/releases/tag/v${{ matrix.new_version }}
+          if git diff --quiet -- flake.nix; then
+            echo "No file changes after update."
+            exit 0
+          fi
 
-            ---
-            *This PR was automatically created by the update workflow.*
-          branch: update/${{ matrix.edition }}-${{ matrix.new_version }}
-          delete-branch: true
-          labels: |
-            automated
-            dependencies
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flake.nix
+          git commit -m "chore: update CLIProxyAPI editions"
+          git push origin HEAD:main
