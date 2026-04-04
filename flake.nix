@@ -57,12 +57,12 @@
           homepage = "https://github.com/router-for-me/CLIProxyAPIPlus";
         };
         cliproxyapi-business = {
-          version = "2026.11.0";
+          version = "2026.13.0";
           hashes = {
-            "x86_64-linux" = "sha256-hzGxDjpIKGyjPv7Qc31in2I7G4oyj7uF7bZ9kw/NDvw=";
-            "aarch64-linux" = "sha256-MgA+I2tJqdbduN0H89fQesBjDaKoFvWbUoqZJoLK7mY=";
-            "x86_64-darwin" = "sha256-KUPW51riU2q5FwhvuDzER3bz6GXt3dgMxZpAJSjQcEU=";
-            "aarch64-darwin" = "sha256-7eqs57m5mwGRzeaD2ExbZ+OeQzZaeZ57+l1qvf2/Avk=";
+            "x86_64-linux" = "sha256-5nf7fH76xKDeHIftekOeXvriy5s6cGfYoiSngQ4ducw=";
+            "aarch64-linux" = "sha256-M/Xwm/gpTIB+uW0Yq50WaTa9cwhDNHXMLHUiozaTTdU=";
+            "x86_64-darwin" = "sha256-hkNZ7BlukZpTP5j+Wctexa0cbmJV9bRjG7vN7+UmCvg=";
+            "aarch64-darwin" = "sha256-Q6rVdkZkaueFNX5/0Pl618lGlUvxiWPlAkqbdntkw6E=";
           };
           repo = "router-for-me/CLIProxyAPIBusiness";
           archivePrefix = "cpab";
