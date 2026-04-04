@@ -33,13 +33,13 @@ All editions install their binary as `cliproxyapi`, making them interchangeable 
 
 ```bash
 # Run base edition
-nix run github:benjaminkitt/nix-cliproxyapi
+nix run github:GustavoWidman/nix-cliproxyapi
 
 # Run plus edition
-nix run github:benjaminkitt/nix-cliproxyapi#cliproxyapi-plus
+nix run github:GustavoWidman/nix-cliproxyapi#cliproxyapi-plus
 
 # Run business edition
-nix run github:benjaminkitt/nix-cliproxyapi#cliproxyapi-business
+nix run github:GustavoWidman/nix-cliproxyapi#cliproxyapi-business
 ```
 
 ### Add to your flake
@@ -48,7 +48,7 @@ nix run github:benjaminkitt/nix-cliproxyapi#cliproxyapi-business
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    cliproxyapi.url = "github:benjaminkitt/nix-cliproxyapi";
+    cliproxyapi.url = "github:GustavoWidman/nix-cliproxyapi";
   };
 
   outputs = { self, nixpkgs, cliproxyapi }: {
