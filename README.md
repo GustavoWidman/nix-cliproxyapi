@@ -1,5 +1,10 @@
 # nix-cliproxyapi
 
+> [!NOTE]
+> this fork exists because the upstream repo went stale and stopped reliably merging update PRs.
+> it auto-bumps CLIProxyAPI editions, refreshes hashes, and commits those changes directly to `main`
+> so the flake keeps tracking upstream releases without human babysitting.
+
 Nix flake for CLIProxyAPI editions - AI CLI proxy services providing OpenAI/Gemini/Claude compatible APIs.
 
 Available editions: **CLIProxyAPI** (base), **CLIProxyAPIPlus** (third-party providers), **CLIProxyAPIBusiness** (enterprise features).

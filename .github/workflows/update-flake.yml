@@ -146,26 +146,33 @@ jobs:
             exit 0
           fi
 
-          chmod +x scripts/update-version.sh
-          while IFS= read -r update; do
-            edition=$(jq -r '.edition' <<<"$update")
-            new_version=$(jq -r '.new_version' <<<"$update")
-            echo "Updating $edition to v$new_version..."
-            ./scripts/update-version.sh "$edition" "$new_version"
-          done < <(jq -c '.[]' updates.json)
-
-      - name: Commit and push to main
-        run: |
-          set -euo pipefail
-
-          if git diff --quiet -- flake.nix; then
-            echo "No file changes after update."
-            exit 0
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email \
             "41898282+github-actions[bot]@users.noreply.github.com"
-          git add flake.nix
-          git commit -m "chore: update CLIProxyAPI editions"
-          git push origin HEAD:main
+          chmod +x scripts/update-version.sh
+
+          while IFS= read -r update; do
+            edition=$(jq -r '.edition' <<<"$update")
+            new_version=$(jq -r '.new_version' <<<"$update")
+            current_version=$(jq -r '.current_version' <<<"$update")
+            repo=$(jq -r '.repo' <<<"$update")
+
+            echo "Updating $edition to v$new_version..."
+            ./scripts/update-version.sh "$edition" "$new_version"
+
+            if git diff --quiet -- flake.nix; then
+              echo "No file changes after update."
+              continue
+            fi
+
+            body=$(printf '%s\n' \
+              "Current version: v$current_version" \
+              "Updated version: v$new_version" \
+              "Release / changelog: https://github.com/$repo/releases/tag/v$new_version" \
+              "" \
+              "Automated update by GitHub Actions.")
+
+            git add flake.nix
+            git commit -m "chore($edition): bump to v$new_version" -m "$body"
+            git push origin HEAD:main
+          done < <(jq -c '.[]' updates.json)
