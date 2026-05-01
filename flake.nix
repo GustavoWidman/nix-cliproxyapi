@@ -16,18 +16,16 @@
         "aarch64-darwin"
       ];
 
-      # Map Nix system to release asset naming
-      systemToAsset = system: {
-        "x86_64-linux" = "linux_amd64";
-        "aarch64-linux" = "linux_arm64";
-        "x86_64-darwin" = "darwin_amd64";
-        "aarch64-darwin" = "darwin_arm64";
-      }.${system};
-
       # Edition metadata (updated by GitHub Action per edition)
       editions = {
         cliproxyapi = {
           version = "6.9.45";
+          assetSuffixes = {
+            "x86_64-linux" = "linux_amd64";
+            "aarch64-linux" = "linux_arm64";
+            "x86_64-darwin" = "darwin_amd64";
+            "aarch64-darwin" = "darwin_arm64";
+          };
           hashes = {
             "x86_64-linux" = "sha256-x//XT3TeXnQ3sa+nTzuh8BykrF7EoAzof25je3GxHjY=";
             "aarch64-linux" = "sha256-l/JrQB9ofrilDNnRu7mkWs98y8P/BK6fWRMwYaxYruM=";
@@ -43,6 +41,12 @@
         };
         cliproxyapi-plus = {
           version = "6.9.28-0";
+          assetSuffixes = {
+            "x86_64-linux" = "linux_amd64";
+            "aarch64-linux" = "linux_arm64";
+            "x86_64-darwin" = "darwin_amd64";
+            "aarch64-darwin" = "darwin_arm64";
+          };
           hashes = {
             "x86_64-linux" = "sha256-T7XzJmdlPUiluTuoV4gCVu6w/mrRljebipTQ5Xgg63A=";
             "aarch64-linux" = "sha256-ayHLU5JaKKSzQPnE8q/9EcHc+GZzG1Y96AL3UdT39so=";
@@ -58,6 +62,12 @@
         };
         cliproxyapi-business = {
           version = "2026.13.0";
+          assetSuffixes = {
+            "x86_64-linux" = "linux_amd64";
+            "aarch64-linux" = "linux_arm64";
+            "x86_64-darwin" = "darwin_amd64";
+            "aarch64-darwin" = "darwin_arm64";
+          };
           hashes = {
             "x86_64-linux" = "sha256-5nf7fH76xKDeHIftekOeXvriy5s6cGfYoiSngQ4ducw=";
             "aarch64-linux" = "sha256-M/Xwm/gpTIB+uW0Yq50WaTa9cwhDNHXMLHUiozaTTdU=";
@@ -76,7 +86,7 @@
       # Package builder for each system and edition
       mkPackage = pkgs: system: editionName: edition:
         let
-          asset = systemToAsset system;
+          asset = edition.assetSuffixes.${system};
         in
         pkgs.stdenv.mkDerivation {
           pname = editionName;

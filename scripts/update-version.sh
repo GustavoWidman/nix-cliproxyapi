@@ -43,34 +43,65 @@ ARCHIVE_PREFIX="${ARCHIVE_PREFIXES[$EDITION]}"
 
 echo "Updating $EDITION to version: $NEW_VERSION"
 
-# Define platforms
-declare -A PLATFORMS=(
-    ["x86_64-linux"]="linux_amd64"
-    ["aarch64-linux"]="linux_arm64"
-    ["x86_64-darwin"]="darwin_amd64"
-    ["aarch64-darwin"]="darwin_arm64"
+SYSTEMS=(
+    "x86_64-linux"
+    "aarch64-linux"
+    "x86_64-darwin"
+    "aarch64-darwin"
 )
+
+asset_candidates() {
+    case "$1" in
+        x86_64-linux)
+            printf '%s\n' "linux_amd64"
+            ;;
+        aarch64-linux)
+            printf '%s\n' "linux_arm64" "linux_aarch64"
+            ;;
+        x86_64-darwin)
+            printf '%s\n' "darwin_amd64"
+            ;;
+        aarch64-darwin)
+            printf '%s\n' "darwin_arm64" "darwin_aarch64"
+            ;;
+        *)
+            echo "Error: unsupported Nix system '$1'" >&2
+            return 1
+            ;;
+    esac
+}
 
 # Compute hashes for each platform
 declare -A HASHES
+declare -A ASSETS
 
-for nixSystem in "${!PLATFORMS[@]}"; do
-    asset="${PLATFORMS[$nixSystem]}"
-    url="https://github.com/${REPO}/releases/download/v${NEW_VERSION}/${ARCHIVE_PREFIX}_${NEW_VERSION}_${asset}.tar.gz"
+for nixSystem in "${SYSTEMS[@]}"; do
+    hash=""
+    rawHash=""
+    asset=""
 
-    echo "Fetching hash for $nixSystem ($asset)..."
+    for candidate in $(asset_candidates "$nixSystem"); do
+        url="https://github.com/${REPO}/releases/download/v${NEW_VERSION}/${ARCHIVE_PREFIX}_${NEW_VERSION}_${candidate}.tar.gz"
 
-    # Use nix-prefetch-url to get the hash
-    rawHash=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null)
-    hash=$(nix hash convert --hash-algo sha256 --to sri "$rawHash" 2>/dev/null || nix hash to-sri --type sha256 "$rawHash" 2>/dev/null)
+        echo "Fetching hash for $nixSystem ($candidate)..."
+
+        if rawHash=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null); then
+            hash=$(nix hash convert --hash-algo sha256 --to sri "$rawHash" 2>/dev/null || nix hash to-sri --type sha256 "$rawHash" 2>/dev/null)
+            asset="$candidate"
+            break
+        fi
+    done
 
     if [ -z "$hash" ]; then
         echo "Error: Failed to fetch hash for $nixSystem"
+        echo "Tried asset suffixes:"
+        asset_candidates "$nixSystem" | sed 's/^/  - /'
         exit 1
     fi
 
     HASHES["$nixSystem"]="$hash"
-    echo "  $nixSystem: $hash"
+    ASSETS["$nixSystem"]="$asset"
+    echo "  $nixSystem ($asset): $hash"
 done
 
 echo ""
@@ -82,9 +113,17 @@ echo "Updating flake.nix..."
 export EDITION NEW_VERSION
 perl -i -0pe 's/($ENV{EDITION} = \{[^}]*?)version = "[^"]*"/$1version = "$ENV{NEW_VERSION}"/s' flake.nix
 
+# Update each asset suffix within the specific edition block. Upstream has used
+# both arm64 and aarch64 naming for ARM releases.
+for nixSystem in "${SYSTEMS[@]}"; do
+    asset="${ASSETS[$nixSystem]}"
+    export nixSystem asset
+    perl -i -0pe 's/($ENV{EDITION} = \{.*?assetSuffixes = \{.*?)"$ENV{nixSystem}" = "[^"]+";/$1"$ENV{nixSystem}" = "$ENV{asset}";/s' flake.nix
+done
+
 # Update each hash within the specific edition block
 # Match both quoted strings ("sha256-...") and Nix expressions (nixpkgs.lib.fakeHash)
-for nixSystem in "${!HASHES[@]}"; do
+for nixSystem in "${SYSTEMS[@]}"; do
     hash="${HASHES[$nixSystem]}"
     export nixSystem hash
     perl -i -0pe 's/($ENV{EDITION} = \{.*?hashes = \{.*?)"$ENV{nixSystem}" = [^;]+;/$1"$ENV{nixSystem}" = "$ENV{hash}";/s' flake.nix
