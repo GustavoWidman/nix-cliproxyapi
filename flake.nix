@@ -99,7 +99,10 @@
 
           sourceRoot = ".";
 
-          nativeBuildInputs = [ pkgs.autoPatchelfHook ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [ pkgs.stdenv.cc.cc.lib ];
+          nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isLinux [
+            pkgs.autoPatchelfHook
+            pkgs.stdenv.cc.cc.lib
+          ];
 
           installPhase = ''
             runHook preInstall
