@@ -15,7 +15,7 @@ in
       type = lib.types.package;
       default = flake.packages.${pkgs.system}.cliproxyapi;
       defaultText = lib.literalExpression "flake.packages.\${pkgs.system}.cliproxyapi";
-      description = "The CLIProxyAPI package to use. Available editions: cliproxyapi (base), cliproxyapi-plus, cliproxyapi-business.";
+      description = "The CLIProxyAPI package to use. Available editions: cliproxyapi (base), cliproxyapi-business.";
     };
 
     port = lib.mkOption {

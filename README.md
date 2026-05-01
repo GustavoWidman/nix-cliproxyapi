@@ -7,7 +7,10 @@
 
 Nix flake for CLIProxyAPI editions - AI CLI proxy services providing OpenAI/Gemini/Claude compatible APIs.
 
-Available editions: **CLIProxyAPI** (base), **CLIProxyAPIPlus** (third-party providers), **CLIProxyAPIBusiness** (enterprise features).
+Available editions: **CLIProxyAPI** (base) and **CLIProxyAPIBusiness** (enterprise features).
+
+> [!WARNING]
+> CLIProxyAPIPlus is temporarily not distributed because its upstream repository and release assets are not publicly fetchable.
 
 ## Features
 
@@ -22,7 +25,6 @@ Available editions: **CLIProxyAPI** (base), **CLIProxyAPIPlus** (third-party pro
 | Package | Description | License | Default Port |
 |---------|-------------|---------|--------------|
 | `cliproxyapi` | Base AI CLI proxy (OpenAI/Gemini/Claude compatible) | MIT | 8317 |
-| `cliproxyapi-plus` | Base + third-party providers (Copilot, Kiro) | MIT | 8317 |
 | `cliproxyapi-business` | Full business edition (user mgmt, billing, web UI, DB support) | SSPL | 8318 |
 
 All editions install their binary as `cliproxyapi`, making them interchangeable in NixOS/darwin modules.
@@ -34,9 +36,6 @@ All editions install their binary as `cliproxyapi`, making them interchangeable 
 ```bash
 # Run base edition
 nix run github:GustavoWidman/nix-cliproxyapi
-
-# Run plus edition
-nix run github:GustavoWidman/nix-cliproxyapi#cliproxyapi-plus
 
 # Run business edition
 nix run github:GustavoWidman/nix-cliproxyapi#cliproxyapi-business

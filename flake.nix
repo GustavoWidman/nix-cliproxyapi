@@ -83,6 +83,10 @@
         };
       };
 
+      # CLIProxyAPIPlus is temporarily not distributed because the upstream
+      # repository and release assets currently return 404.
+      distributableEditions = builtins.removeAttrs editions [ "cliproxyapi-plus" ];
+
       # Package builder for each system and edition
       mkPackage = pkgs: system: editionName: edition:
         let
@@ -134,7 +138,7 @@
         pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
       in
       {
-        packages = builtins.mapAttrs (name: edition: mkPackage pkgs system name edition) editions
+        packages = builtins.mapAttrs (name: edition: mkPackage pkgs system name edition) distributableEditions
           // { default = self.packages.${system}.cliproxyapi; };
 
         apps = builtins.mapAttrs (name: pkg: flake-utils.lib.mkApp { drv = pkg; name = "cliproxyapi"; }) self.packages.${system}
@@ -157,6 +161,6 @@
       overlays.default = final: prev:
         builtins.mapAttrs (name: edition:
           self.packages.${prev.system}.${name}
-        ) editions;
+        ) distributableEditions;
     };
 }
