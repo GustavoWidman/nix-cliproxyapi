@@ -19,7 +19,7 @@
       # Edition metadata (updated by GitHub Action per edition)
       editions = {
         cliproxyapi = {
-          version = "7.2.15";
+          version = "7.2.16";
           assetSuffixes = {
             "x86_64-linux" = "linux_amd64";
             "aarch64-linux" = "linux_aarch64";
@@ -27,10 +27,10 @@
             "aarch64-darwin" = "darwin_aarch64";
           };
           hashes = {
-            "x86_64-linux" = "sha256-ySg/0fzjQmgyMG0SBADjRdp84Ku2r3k0UtaD22y//EA=";
-            "aarch64-linux" = "sha256-srSuyOAYzO4PX89u0xHypkv4Y+JgDQVF9OKF733DKZ0=";
-            "x86_64-darwin" = "sha256-x0PJRq90JAPWLgi0mMdspGGUUkNkvdNQ2II32BqvzLA=";
-            "aarch64-darwin" = "sha256-RuKCGYHCh6J8D3Yxk27FYF760gJJ+n8NJonBZ/VLgzc=";
+            "x86_64-linux" = "sha256-Es5m5HR0VAd9TI9CrhbX1SNOIIsFMb0UddSWJL5lqTc=";
+            "aarch64-linux" = "sha256-hKMBpknpowkhU4ZCv2fkJATxYOpCMkVLv3pLLKU4kUM=";
+            "x86_64-darwin" = "sha256-fvfF9wOUehBNYxqEM45dq/HL1y9J+GXZhUAoVVGUAFs=";
+            "aarch64-darwin" = "sha256-lzvuRX/u+Kqzmoc1Vb122rkwdlLdmln2XH9IhNxSsGA=";
           };
           repo = "router-for-me/CLIProxyAPI";
           archivePrefix = "CLIProxyAPI";
