@@ -8,6 +8,10 @@ let
   settingsFormat = pkgs.formats.yaml { };
 in
 {
+  # nixpkgs provides a module with the same option namespace. Prefer this
+  # module when both are imported.
+  disabledModules = [ "services/misc/cliproxyapi.nix" ];
+
   options.services.cliproxyapi = {
     enable = lib.mkEnableOption "CLIProxyAPI service";
 
