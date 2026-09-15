@@ -294,4 +294,8 @@ in
       '';
     };
   };
+
+  meta = {
+    doc = ./cliproxyapi.md;
+  };
 }
